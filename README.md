@@ -7,7 +7,7 @@ https://disaev.me/p/writing-useful-go-analysis-linter/
 
 Named errors used in defers are not reported. If you also want to report them set `report-error-in-defer` to true.
 
-Inspired by, and derived from the excellent https://github.com/firefart/nonamedreturns .  I respect the author's opinion, but disagree wiht him on every point.
+Inspired by, and derived from the excellent https://github.com/firefart/nonamedreturns .  I respect the author's opinion, but disagree with him on every point.
 
 This linter will also catch "Shadowed Variables", and cases where the function signature claims return values are named, but the function returns something else.
 
