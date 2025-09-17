@@ -41,7 +41,7 @@ linters:
     - nilnesserr
     - nilnil
     - noctx
-    - namedreturns
+    # - namedreturns  # Custom linter - enable once v0.1.0 is released
     - nosprintfhostport
     - perfsprint
     - predeclared
@@ -65,6 +65,11 @@ linters:
     - usetesting
     - wastedassign
     - whitespace
+  custom:
+    namedreturns:
+      path: github.com/nikogura/namedreturns
+      type: module
+      description: Reports functions that don't use named returns
   settings:
     depguard:
       rules:
