@@ -102,11 +102,11 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         custom_tag: v${{ needs.test.outputs.version }}
 
-    - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v6.4.0
+    - name: Publish Release
+      uses: softprops/action-gh-release@v2
       with:
-        distribution: goreleaser
-        version: latest
-        args: release --clean
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: ${{ needs.test.outputs.version_tag }}
+        name: ${{ needs.test.outputs.version_tag }}
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
