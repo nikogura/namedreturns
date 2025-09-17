@@ -39,7 +39,7 @@ jobs:
       with:
         bump_each_commit: true
         tag_prefix: "v"
-        format: "v${major}.${minor}.${patch}"
+        format: "${major}.${minor}.${patch}"
         major_pattern: "BREAKING CHANGE:"
         minor_pattern: "feat:"
         version_from_branch: false
@@ -101,7 +101,6 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         custom_tag: ${{ needs.test.outputs.version_tag }}
-        tag_prefix: ""
 
     - name: Publish Release
       uses: softprops/action-gh-release@v2
