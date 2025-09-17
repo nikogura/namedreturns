@@ -100,7 +100,7 @@ jobs:
       uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        custom_tag: ${{ needs.test.outputs.version_tag }}
+        custom_tag: v${{ needs.test.outputs.version }}
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6.4.0
