@@ -74,7 +74,7 @@ jobs:
       with:
         version: latest
         verify: false  # Disable schema validation for custom linters
-        args: --timeout=30m
+        args: --timeout=30m --config=.golangci.local.yml
 
     - name: Lint Self
       run: make lint-self
