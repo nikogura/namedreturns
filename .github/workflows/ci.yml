@@ -100,7 +100,7 @@ jobs:
       uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        custom_tag: v${{ needs.test.outputs.version }}
+        custom_tag: ${{ needs.test.outputs.version_tag }}
 
     - name: Publish Release
       uses: softprops/action-gh-release@v2
