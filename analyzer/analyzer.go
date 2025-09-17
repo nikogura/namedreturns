@@ -22,19 +22,20 @@ var Analyzer = &analysis.Analyzer{
 	Requires: []*analysis.Analyzer{inspect.Analyzer},
 }
 
-func flags() flag.FlagSet {
-	fs := flag.FlagSet{}
+func flags() (fs flag.FlagSet) {
+	fs = flag.FlagSet{}
 	fs.Bool(FlagReportErrorInDefer, false, "report named error if it is assigned inside defer")
-	return fs
+	return
 }
 
-func run(pass *analysis.Pass) (interface{}, error) {
+func run(pass *analysis.Pass) (result interface{}, err error) {
 	reportErrorInDefer := pass.Analyzer.Flags.Lookup(FlagReportErrorInDefer).Value.String() == "true"
 	errorType := types.Universe.Lookup("error").Type()
 
 	inspector, ok := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	if !ok {
-		return nil, errors.New("failed to get inspector")
+		err = errors.New("failed to get inspector")
+		return result, err
 	}
 
 	// only filter function defintions
@@ -107,17 +108,18 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 	})
 
-	return nil, nil // nolint:nilnil
+	return result, err
 }
 
 // checkNamedReturnUsage analyzes the function body to see if named return variables are used in return statements
 func checkNamedReturnUsage(pass *analysis.Pass, body *ast.BlockStmt, namedReturnNames []string, funcPos token.Pos) {
-	ast.Inspect(body, func(node ast.Node) bool {
+	ast.Inspect(body, func(node ast.Node) (continueInspection bool) {
 		if returnStmt, ok := node.(*ast.ReturnStmt); ok {
 			// Check if this is a bare return (no expressions)
 			if len(returnStmt.Results) == 0 {
 				// Bare return is fine when using named returns
-				return true
+				continueInspection = true
+				return continueInspection
 			}
 
 			// Check if the return statement uses the named return variables
@@ -141,13 +143,14 @@ func checkNamedReturnUsage(pass *analysis.Pass, body *ast.BlockStmt, namedReturn
 				}
 			}
 		}
-		return true
+		continueInspection = true
+		return continueInspection
 	})
 }
 
 // checkNamedReturnShadowing detects when named return variables are shadowed by local variables
 func checkNamedReturnShadowing(pass *analysis.Pass, body *ast.BlockStmt, namedReturnNames []string) {
-	ast.Inspect(body, func(node ast.Node) bool {
+	ast.Inspect(body, func(node ast.Node) (continueInspection bool) {
 		// Check for variable declarations and assignments that might shadow named returns
 		switch n := node.(type) {
 		case *ast.AssignStmt:
@@ -202,39 +205,37 @@ func checkNamedReturnShadowing(pass *analysis.Pass, body *ast.BlockStmt, namedRe
 				}
 			}
 		}
-		return true
+		continueInspection = true
+		return continueInspection
 	})
 }
 
-func findDeferWithVariableAssignment(body *ast.BlockStmt, info *types.Info, variable types.Object) bool {
-	found := false
-
-	ast.Inspect(body, func(node ast.Node) bool {
+func findDeferWithVariableAssignment(body *ast.BlockStmt, info *types.Info, variable types.Object) (found bool) {
+	ast.Inspect(body, func(node ast.Node) (continueInspection bool) {
 		if found {
-			return false // stop inspection
+			return // stop inspection
 		}
 
 		if d, ok := node.(*ast.DeferStmt); ok {
 			if fn, ok2 := d.Call.Fun.(*ast.FuncLit); ok2 {
 				if findVariableAssignment(fn.Body, info, variable) {
 					found = true
-					return false
+					return
 				}
 			}
 		}
 
-		return true
+		continueInspection = true
+		return
 	})
 
-	return found
+	return
 }
 
-func findVariableAssignment(body *ast.BlockStmt, info *types.Info, variable types.Object) bool {
-	found := false
-
-	ast.Inspect(body, func(node ast.Node) bool {
+func findVariableAssignment(body *ast.BlockStmt, info *types.Info, variable types.Object) (found bool) {
+	ast.Inspect(body, func(node ast.Node) (continueInspection bool) {
 		if found {
-			return false // stop inspection
+			return // stop inspection
 		}
 
 		if a, ok := node.(*ast.AssignStmt); ok {
@@ -242,14 +243,15 @@ func findVariableAssignment(body *ast.BlockStmt, info *types.Info, variable type
 				if i, ok2 := lh.(*ast.Ident); ok2 {
 					if info.ObjectOf(i) == variable {
 						found = true
-						return false
+						return
 					}
 				}
 			}
 		}
 
-		return true
+		continueInspection = true
+		return
 	})
 
-	return found
+	return
 }
