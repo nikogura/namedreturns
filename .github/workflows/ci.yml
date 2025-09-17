@@ -78,6 +78,7 @@ jobs:
       uses: golangci/golangci-lint-action@v8
       with:
         version: latest
+        verify: false  # Disable schema validation for custom linters
         args: --timeout=30m
 
   publish:

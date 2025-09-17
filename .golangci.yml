@@ -41,7 +41,7 @@ linters:
     - nilnesserr
     - nilnil
     - noctx
-    # - namedreturns  # Custom linter - enable once v0.1.0 is released
+    - namedreturns
     - nosprintfhostport
     - perfsprint
     - predeclared
