@@ -2,6 +2,46 @@
 
 This linter enforces the use of named returns in Go functions. Named returns improve code readability and make function signatures more self-documenting.
 
+> **Note**: This linter was proposed for inclusion in golangci-lint but was ultimately rejected. See [golangci-lint PR #6083](https://github.com/golangci/golangci-lint/pull/6083) for the discussion. The maintainers cited existing linters as duplicates, but this linter serves a different purpose:
+>
+> - **nonamedreturns** (firefart/nonamedreturns): Flags named returns as bad practice - the opposite philosophy
+> - **gocritic (unnamedResult)**: Suggests adding names but doesn't enforce or validate them
+> - **revive (bare-return)**: Warns against bare returns but doesn't ensure proper named return usage
+>
+> This linter uniquely enforces consistent use of named returns and catches shadowed variables and signature mismatches. As a result, this standalone version provides an easy way to use the linter outside of the golangci-lint ecosystem.
+
+## Installation and Usage
+
+Since it was rejected for inclusion in [https://github.com/golangci/golangci-lint](https://github.com/golangci/golangci-lint), we have to get creative.
+
+### Option 1: Install via go install (Recommended)
+```bash
+go install github.com/nikogura/namedreturns@latest
+namedreturns ./...
+```
+
+### Option 2: Run directly with go run
+```bash
+go run github.com/nikogura/namedreturns@latest ./...
+```
+
+### Option 3: Build and run locally
+```bash
+make build
+./namedreturns ./...
+```
+
+### Option 4: Use Makefile targets
+```bash
+# Build and run on the project itself
+make lint-self
+
+# Or just build the binary
+make build
+```
+
+## About
+
 Tutorial on how to write your own linter:
 https://disaev.me/p/writing-useful-go-analysis-linter/
 
