@@ -49,6 +49,16 @@ func processUser(id string) (*User, error) {
     }
     return user, nil
 }
+
+// Bad - Returning something other than what was promised
+func processUser(id string) (user *User, err error) {
+    myUser, err := fetchUser(id)
+    if err != nil {
+        return // returns something like what was promised.
+    }
+
+    return myUser, nil  // return values might be equivalent to what was promised, but in a long complicated function there could also be surprises.
+}
 ```
 ## Installation and Usage
 
