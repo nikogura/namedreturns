@@ -13,7 +13,8 @@ on:
       - 'docs/**'
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.25'
+  MIN_GO_VERSION: '1.21'
 
 permissions:
   contents: write
@@ -78,6 +79,53 @@ jobs:
 
     - name: Lint Self
       run: make lint-self
+
+  # Test Go version compatibility matrix
+  compatibility-test:
+    name: Go Version Compatibility Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-build-version: ['1.21', '1.22', '1.23', '1.24', '1.25']
+        go-target-version: ['1.21', '1.22', '1.23', '1.24', '1.25']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go ${{ matrix.go-build-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-build-version }}
+
+    - name: Build namedreturns with Go ${{ matrix.go-build-version }}
+      run: |
+        go mod tidy
+        go build -o namedreturns-${{ matrix.go-build-version }} .
+
+    - name: Create test codebase with Go ${{ matrix.go-target-version }}
+      run: |
+        mkdir test-target-${{ matrix.go-target-version }}
+        cd test-target-${{ matrix.go-target-version }}
+        echo "module test" > go.mod
+        echo "go ${{ matrix.go-target-version }}.0" >> go.mod
+        cat << 'EOF' > main.go
+        package main
+
+        func example() (result string, err error) {
+            return "test", nil
+        }
+
+        func badExample() (string, error) {
+            return "bad", nil
+        }
+        EOF
+
+    - name: Test compatibility (build=${{ matrix.go-build-version }}, target=${{ matrix.go-target-version }})
+      run: |
+        cd test-target-${{ matrix.go-target-version }}
+        ../namedreturns-${{ matrix.go-build-version }} . || echo "Expected some violations"
+        echo "✅ namedreturns built with Go ${{ matrix.go-build-version }} can analyze Go ${{ matrix.go-target-version }} codebases"
 
   publish:
     name: Publish

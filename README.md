@@ -60,6 +60,30 @@ func processUser(id string) (user *User, err error) {
     return myUser, nil  // return values might be equivalent to what was promised, but in a long complicated function there could also be surprises.
 }
 ```
+## Go Version Compatibility
+
+namedreturns supports analyzing codebases using **Go 1.21.0 and later**. The linter binary can be built with any Go version >= 1.21.0.
+
+### Compatibility with Newer Go Versions
+
+To analyze codebases using newer Go versions than the linter was built with:
+
+```bash
+# Simple rebuild with current Go version
+make rebuild
+
+# Or manually:
+go build -o namedreturns .
+```
+
+**Why this works:** namedreturns uses only stable Go AST analysis APIs that are forward-compatible across Go versions.
+
+### Version Strategy
+
+- **Minimum Go Version**: 1.21.0 (set in go.mod)
+- **Analysis Target**: Any Go 1.21.0+ codebase
+- **Recommendation**: Rebuild with your current Go version for optimal compatibility
+
 ## Installation and Usage
 
 > **Note**: This linter was proposed for inclusion in golangci-lint but was ultimately rejected. See [golangci-lint PR #6083](https://github.com/golangci/golangci-lint/pull/6083) for the discussion. The maintainers cited existing linters as duplicates, but this linter serves a different purpose:
