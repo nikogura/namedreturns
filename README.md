@@ -2,6 +2,8 @@
 
 This linter enforces the use of named returns in Go functions. Named returns improve code readability and make function signatures more self-documenting.
 
+## Installation and Usage
+
 > **Note**: This linter was proposed for inclusion in golangci-lint but was ultimately rejected. See [golangci-lint PR #6083](https://github.com/golangci/golangci-lint/pull/6083) for the discussion. The maintainers cited existing linters as duplicates, but this linter serves a different purpose:
 >
 > - **nonamedreturns** (firefart/nonamedreturns): Flags named returns as bad practice - the opposite philosophy
@@ -9,8 +11,6 @@ This linter enforces the use of named returns in Go functions. Named returns imp
 > - **revive (bare-return)**: Warns against bare returns but doesn't ensure proper named return usage
 >
 > This linter uniquely enforces consistent use of named returns and catches shadowed variables and signature mismatches. As a result, this standalone version provides an easy way to use the linter outside of the golangci-lint ecosystem.
-
-## Installation and Usage
 
 Since it was rejected for inclusion in [https://github.com/golangci/golangci-lint](https://github.com/golangci/golangci-lint), we have to get creative.
 
