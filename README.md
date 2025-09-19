@@ -14,30 +14,69 @@ This linter enforces the use of named returns in Go functions. Named returns imp
 
 Since it was rejected for inclusion in [https://github.com/golangci/golangci-lint](https://github.com/golangci/golangci-lint), we have to get creative.
 
-### Option 1: Install via go install (Recommended)
+### Option 1: golangci-lint integration (Recommended)
+Add to your `.golangci.yml`:
+```yaml
+linters:
+  custom:
+    namedreturns:
+      type: module
+      path: github.com/nikogura/namedreturns
+      description: enforces the use of named returns in Go functions
+      original-url: github.com/nikogura/namedreturns
+  enable:
+    - namedreturns
+```
+
+Then run: `golangci-lint run`
+
+### Option 2: Install via go install
 ```bash
 go install github.com/nikogura/namedreturns@latest
 namedreturns ./...
 ```
 
-### Option 2: Run directly with go run
+### Option 3: Run directly with go run
 ```bash
 go run github.com/nikogura/namedreturns@latest ./...
 ```
 
-### Option 3: Build and run locally
+### Option 4: Build and run locally
 ```bash
 make build
 ./namedreturns ./...
 ```
 
-### Option 4: Use Makefile targets
+### Option 5: Use Makefile targets
 ```bash
 # Build and run on the project itself
 make lint-self
 
 # Or just build the binary
 make build
+```
+
+### Option 6: Use 'custom' directive in .golangci-lint.yml
+The following syntax is supported by `golangci-lint`:
+
+```yaml
+  custom:
+    namedreturns:
+      path: github.com/nikogura/namedreturns
+      type: module
+      description: enforces the use of named returns in Go functions
+      original-url: github.com/nikogura/namedreturns
+```
+
+However, the schema parsers built in to many tools and IDE's are not entirely up to date as of the time of this writing. While `golangci-lint run` will run the linter, many syntax/schema testers will choke on the 'custom' section.
+
+For example:
+```yaml
+    - name: Lint
+      uses: golangci/golangci-lint-action@v8
+      with:
+        version: latest
+        verify: false   # Need this to prevent the action from choking on the 'custom' section.
 ```
 
 ## About
