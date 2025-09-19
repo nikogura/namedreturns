@@ -120,9 +120,9 @@ I'm always trying to do my "future self" a favor.
 func processUser(id string) (user *User, err error) {
     user, err = fetchUser(id)
     if err != nil {
-        return // returns user and err as defined in signature
+        return user, err // returns user and err as defined in signature
     }
-    return
+    return user, err  // clearly returns what was promised in the signature.
 }
 
 // Bad - unnamed returns
