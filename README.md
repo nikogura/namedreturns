@@ -96,7 +96,34 @@ go build -o namedreturns .
 
 Since it was rejected for inclusion in [https://github.com/golangci/golangci-lint](https://github.com/golangci/golangci-lint), we have to get creative.
 
-### Option 1: golangci-lint integration (Recommended)
+### Option 1: Install via go install (Recommended)
+```bash
+go install github.com/nikogura/namedreturns@latest
+namedreturns ./...
+```
+
+### Option 2: Run directly with go run
+```bash
+go run github.com/nikogura/namedreturns@latest ./...
+```
+
+### Option 3: Build and run locally
+```bash
+make build
+./namedreturns ./...
+```
+
+### Option 4: Use Makefile targets
+```bash
+# Build and run on the project itself
+make lint-self
+
+# Or just build the binary
+make build
+```
+
+
+### Option 5: golangci-lint integration per golangci-lint.run docs (Doesn't work at the time of this writing.)
 Add to your `.golangci.yml`:
 ```yaml
 linters:
@@ -111,34 +138,7 @@ linters:
 ```
 
 Then run: `golangci-lint run`
-
-### Option 2: Install via go install
-```bash
-go install github.com/nikogura/namedreturns@latest
-namedreturns ./...
-```
-
-### Option 3: Run directly with go run
-```bash
-go run github.com/nikogura/namedreturns@latest ./...
-```
-
-### Option 4: Build and run locally
-```bash
-make build
-./namedreturns ./...
-```
-
-### Option 5: Use Makefile targets
-```bash
-# Build and run on the project itself
-make lint-self
-
-# Or just build the binary
-make build
-```
-
-### Option 6: Use 'custom' directive in .golangci-lint.yml
+### Option 6: Use 'custom' directive in .golangci-lint.yml (Doesn't work at the time of this writing.)
 The following syntax is supported by `golangci-lint`:
 
 ```yaml
