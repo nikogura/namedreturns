@@ -114,6 +114,12 @@ func run(pass *analysis.Pass) (result interface{}, err error) {
 // checkNamedReturnUsage analyzes the function body to see if named return variables are used in return statements
 func checkNamedReturnUsage(pass *analysis.Pass, body *ast.BlockStmt, namedReturnNames []string, funcPos token.Pos) {
 	ast.Inspect(body, func(node ast.Node) (continueInspection bool) {
+		// Stop inspection at nested function literals - they have their own scope and named returns
+		if _, ok := node.(*ast.FuncLit); ok {
+			continueInspection = false
+			return continueInspection
+		}
+
 		if returnStmt, ok := node.(*ast.ReturnStmt); ok {
 			// Check if this is a bare return (no expressions)
 			if len(returnStmt.Results) == 0 {
@@ -151,6 +157,12 @@ func checkNamedReturnUsage(pass *analysis.Pass, body *ast.BlockStmt, namedReturn
 // checkNamedReturnShadowing detects when named return variables are shadowed by local variables
 func checkNamedReturnShadowing(pass *analysis.Pass, body *ast.BlockStmt, namedReturnNames []string) {
 	ast.Inspect(body, func(node ast.Node) (continueInspection bool) {
+		// Stop inspection at nested function literals - they have their own scope
+		if _, ok := node.(*ast.FuncLit); ok {
+			continueInspection = false
+			return continueInspection
+		}
+
 		// Check for variable declarations and assignments that might shadow named returns
 		switch n := node.(type) {
 		case *ast.AssignStmt:

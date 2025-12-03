@@ -16,6 +16,7 @@ func TestAll(t *testing.T) {
 
 	testdata := filepath.Join(filepath.Dir(wd), "testdata")
 	analysistest.Run(t, testdata, Analyzer, "default-config")
+	analysistest.Run(t, testdata, Analyzer, "closure-scope-fix")
 
 	err = Analyzer.Flags.Set(FlagReportErrorInDefer, "true")
 	if err != nil {
