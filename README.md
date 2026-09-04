@@ -63,9 +63,18 @@ func processUser(id string) (user *User, err error) {
 ## Go Version Compatibility
 
 namedreturns analyzes codebases using **Go 1.21.0 and later**. The binary itself
-must be built with **Go 1.25.0 or later**.
+must be built with **Go 1.25.0 or later**, and with a Go **at least as new as
+the code it analyzes**.
 
-Those two numbers are different on purpose, and the gap is worth understanding.
+That second rule is the one that bites: a binary built with Go 1.25 cannot
+analyze a module whose `go` directive is `1.27`, and says so plainly:
+
+```
+package requires newer Go version go1.27 (application built with go1.25)
+namedreturns: analysis skipped due to errors in package
+```
+
+Rebuild with the newer toolchain and it works. `make rebuild` exists for this.
 
 ### Why The Build Version Matters
 
@@ -109,7 +118,8 @@ current code is of no use.
 ### Version Strategy
 
 - **Minimum build version**: Go 1.25.0 (set in go.mod, floored by x/tools)
-- **Analysis target**: any Go 1.21.0+ codebase
+- **Analysis target**: any Go 1.21.0+ codebase, up to the Go version the binary
+  was built with
 - **CI**: a matrix builds against every supported toolchain and analyzes every
   supported target, asserting both that the run does not crash and that expected
   violations are still reported
