@@ -14,7 +14,7 @@ on:
 
 env:
   GO_VERSION: '1.25'
-  MIN_GO_VERSION: '1.21'
+  MIN_GO_VERSION: '1.25'
 
 permissions:
   contents: write
@@ -86,8 +86,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-build-version: ['1.21', '1.22', '1.23', '1.24', '1.25']
-        go-target-version: ['1.21', '1.22', '1.23', '1.24', '1.25']
+        # Build versions are the Go toolchains namedreturns itself is compiled
+        # with. The floor is 1.25 because golang.org/x/tools requires it, and
+        # x/tools is what parses the analyzed package's export data — an older
+        # x/tools cannot read a newer Go's format, which is the whole reason
+        # this matrix exists.
+        go-build-version: ['1.25', '1.26', '1.27']
+        # Target versions are the Go versions of the ANALYZED codebase, which
+        # is the compatibility that actually matters to users. It remains wide:
+        # a binary built with 1.27 still analyses a 1.21 module.
+        go-target-version: ['1.21', '1.22', '1.23', '1.24', '1.25', '1.26', '1.27']
 
     steps:
     - name: Checkout code
@@ -103,17 +111,42 @@ jobs:
         go mod tidy
         go build -o namedreturns-${{ matrix.go-build-version }} .
 
+    # The fixture spans TWO packages on purpose. A single self-contained
+    # package is analyzed straight from source and never exercises the export
+    # data path, so it stays green even when the analyzer cannot read a newer
+    # Go's export format at all. An imported package forces that path, which is
+    # the thing this matrix exists to test.
+    #
+    # The import is a second package in the same module rather than a third-
+    # party one: `go mod tidy` would resolve a dependency whose own go directive
+    # is newer than the target, rewrite go.mod, and quietly collapse every
+    # target cell to the same modern Go version. No tidy, no network, and the
+    # target version under test stays the one the matrix set.
     - name: Create test codebase with Go ${{ matrix.go-target-version }}
       run: |
-        mkdir test-target-${{ matrix.go-target-version }}
+        mkdir -p test-target-${{ matrix.go-target-version }}/helper
         cd test-target-${{ matrix.go-target-version }}
         echo "module test" > go.mod
+        echo "" >> go.mod
         echo "go ${{ matrix.go-target-version }}.0" >> go.mod
+        cat << 'EOF' > helper/helper.go
+        package helper
+
+        import "fmt"
+
+        func Describe(v int) (text string, err error) {
+            text = fmt.Sprintf("%d", v)
+            return text, err
+        }
+        EOF
         cat << 'EOF' > main.go
         package main
 
+        import "test/helper"
+
         func example() (result string, err error) {
-            return "test", nil
+            result, err = helper.Describe(1)
+            return result, err
         }
 
         func badExample() (string, error) {
@@ -121,11 +154,41 @@ jobs:
         }
         EOF
 
+    # This step asserts rather than reports. The previous version ended in
+    # `|| echo "Expected some violations"`, which swallowed every failure mode
+    # including a hard crash — so when a newer Go changed its export data
+    # format and the analyzer died with "package \"fmt\" without types was
+    # imported", the matrix stayed green and the breakage reached users. A
+    # compatibility test that cannot fail is not a test.
     - name: Test compatibility (build=${{ matrix.go-build-version }}, target=${{ matrix.go-target-version }})
       run: |
         cd test-target-${{ matrix.go-target-version }}
-        ../namedreturns-${{ matrix.go-build-version }} . || echo "Expected some violations"
-        echo "✅ namedreturns built with Go ${{ matrix.go-build-version }} can analyze Go ${{ matrix.go-target-version }} codebases"
+        set +e
+        output=$(../namedreturns-${{ matrix.go-build-version }} ./... 2>&1)
+        status=$?
+        set -e
+        echo "$output"
+
+        # A crash in the analysis framework is a failure, not a finding.
+        if echo "$output" | grep -q "internal error"; then
+          echo "::error::namedreturns built with Go ${{ matrix.go-build-version }} cannot analyze Go ${{ matrix.go-target-version }} codebases"
+          exit 1
+        fi
+
+        # badExample has unnamed returns, so the analyzer must report it and
+        # must exit non-zero. Silence here means the analyzer stopped working
+        # without saying so.
+        if ! echo "$output" | grep -q "unnamed return"; then
+          echo "::error::expected an unnamed-return finding and got none"
+          exit 1
+        fi
+
+        if [ "$status" -eq 0 ]; then
+          echo "::error::expected a non-zero exit status with findings present"
+          exit 1
+        fi
+
+        echo "namedreturns built with Go ${{ matrix.go-build-version }} analyzes Go ${{ matrix.go-target-version }} codebases"
 
   publish:
     name: Publish
@@ -144,12 +207,13 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
 
-    - name: Tag Repo
-      uses: mathieudutour/github-tag-action@v6.2
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        custom_tag: ${{ needs.test.outputs.version_tag }}
-
+    # Exactly one step may create the tag, and it is this one: the release
+    # creates tag_name at the current commit if it does not already exist.
+    #
+    # Do not add a separate tagging action alongside it. The semantic-version
+    # step already emits version_tag v-prefixed, and github-tag-action prepends
+    # its own default `v` to custom_tag, so running both produced a duplicate
+    # vv-prefixed tag next to every real one.
     - name: Publish Release
       uses: softprops/action-gh-release@v2
       with:

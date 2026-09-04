@@ -62,27 +62,57 @@ func processUser(id string) (user *User, err error) {
 ```
 ## Go Version Compatibility
 
-namedreturns supports analyzing codebases using **Go 1.21.0 and later**. The linter binary can be built with any Go version >= 1.21.0.
+namedreturns analyzes codebases using **Go 1.21.0 and later**. The binary itself
+must be built with **Go 1.25.0 or later**.
 
-### Compatibility with Newer Go Versions
+Those two numbers are different on purpose, and the gap is worth understanding.
 
-To analyze codebases using newer Go versions than the linter was built with:
+### Why The Build Version Matters
 
-```bash
-# Simple rebuild with current Go version
-make rebuild
+namedreturns is not a pure AST linter. It resolves types through
+`golang.org/x/tools/go/packages`, which reads the compiler's **export data** for
+every imported package — including the standard library. That format is versioned
+and changes with the Go release cycle, and x/tools only understands the releases
+it shipped alongside.
 
-# Or manually:
-go build -o namedreturns .
+So an x/tools older than the Go toolchain compiling the analyzed code cannot read
+that code's export data, and the analysis aborts before it ever reaches an AST:
+
+```
+namedreturns: internal error: package "fmt" without types was imported from "your/package"
 ```
 
-**Why this works:** namedreturns uses only stable Go AST analysis APIs that are forward-compatible across Go versions.
+That failure means **the linter is too old for your Go**, not that your code is
+wrong. The fix is to upgrade, never to work around it.
+
+### Compatibility With Newer Go Versions
+
+Rebuild against the current toolchain:
+
+```bash
+make rebuild
+```
+
+If a new Go release outpaces the pinned x/tools, bump it and rebuild:
+
+```bash
+go get golang.org/x/tools@latest
+make rebuild
+```
+
+Because x/tools tracks the Go release policy, its own `go` directive rises over
+time and carries namedreturns' minimum build version up with it. Supporting the
+newest Go for analysis and building under an old Go are mutually exclusive; this
+project chooses analyzing the newest Go, because a linter that cannot read
+current code is of no use.
 
 ### Version Strategy
 
-- **Minimum Go Version**: 1.21.0 (set in go.mod)
-- **Analysis Target**: Any Go 1.21.0+ codebase
-- **Recommendation**: Rebuild with your current Go version for optimal compatibility
+- **Minimum build version**: Go 1.25.0 (set in go.mod, floored by x/tools)
+- **Analysis target**: any Go 1.21.0+ codebase
+- **CI**: a matrix builds against every supported toolchain and analyzes every
+  supported target, asserting both that the run does not crash and that expected
+  violations are still reported
 
 ## Installation and Usage
 

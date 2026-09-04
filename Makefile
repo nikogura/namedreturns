@@ -35,8 +35,12 @@ compatibility-info:
 	@echo "=== namedreturns Compatibility Info ==="
 	@echo "Built with: $(shell go version)"
 	@echo "Binary info: $(shell go version -m ./$(PROGRAM) 2>/dev/null | head -1 || echo 'Binary not found - run make build')"
-	@echo "Supports analyzing: Go 1.21.0+ codebases"
-	@echo "Recommendation: Rebuild with your current Go version for best compatibility"
+	@echo "Analyzes: Go 1.21.0+ codebases"
+	@echo "Builds with: Go 1.25.0+ (floored by golang.org/x/tools)"
+	@echo "x/tools: $(shell go list -m golang.org/x/tools 2>/dev/null)"
+	@echo "Recommendation: rebuild with your current Go version; if analysis"
+	@echo "  fails with 'package \"fmt\" without types', x/tools is older than"
+	@echo "  your toolchain - run: go get golang.org/x/tools@latest && make rebuild"
 
 # Rebuild for current Go version
 rebuild: clean build
